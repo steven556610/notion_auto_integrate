@@ -1,76 +1,55 @@
-import requests
+import os
+import sys
+
+# 添加 root path 確保可以 import utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils.notion_api import fetch_daily_pages, create_summary_page
+from utils.llm_processor import LLMProcessor
+from utils.db_manager import save_report, init_db
 from datetime import datetime, timedelta
 
-# 配置資訊
-NOTION_TOKEN = "your_integration_token"
-DATABASE_ID = "your_database_id"
-HEADERS = {
-    "Authorization": f"Bearer {NOTION_TOKEN}",
-    "Content-Type": "application/json",
-    "Notion-Version": "2022-06-28"
-}
-
-def get_weekly_pages():
-    url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+def run_weekly_report_workflow():
+    init_db()
     
-    # 計算週間範圍 (前 5 天)
-    five_days_ago = (datetime.now() - timedelta(days=5)).isoformat()
+    # 預設抓取過去 5 天
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=5)
     
-    query_data = {
-        "filter": {
-            "property": "Date",  # 確保你的 Calendar 資料庫日期屬性名稱為 Date
-            "date": {
-                "on_or_after": five_days_ago
-            }
-        }
-    }
+    start_date_str = start_date.strftime("%Y-%m-%d")
+    end_date_str = end_date.strftime("%Y-%m-%d")
     
-    response = requests.post(url, headers=HEADERS, json=query_data)
-    return response.json().get("results", [])
-
-def create_summary_page(content_text):
-    url = "https://api.notion.com/v1/pages"
+    print(f"[*] Fetching Notion pages from {start_date_str} to {end_date_str}...")
+    pages = fetch_daily_pages(start_date_str, end_date_str)
     
-    new_page_data = {
-        "parent": {"database_id": DATABASE_ID},
-        "properties": {
-            "Name": {"title": [{"text": {"content": f"📅 週總結報告 - {datetime.now().strftime('%Y-%m-%d')}"}}]},
-            "Date": {"date": {"start": datetime.now().strftime('%Y-%m-%d')}}
-        },
-        "children": [
-            {
-                "object": "block",
-                "type": "heading_2",
-                "heading_2": {"rich_text": [{"text": {"content": "週間任務總結" reconstruction}}]}
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{"text": {"content": content_text}}]
-                }
-            }
-        ]
-    }
+    if not pages:
+        print("[!] No pages found in the specified date range. Exiting.")
+        return
+        
+    print(f"[*] Found {len(pages)} daily pages. Processing with LLM...")
     
-    requests.post(url, headers=HEADERS, json=new_page_data)
-
-def main():
-    # 1. 抓取資料
-    pages = get_weekly_pages()
+    # 預設選用快速模型
+    processor = LLMProcessor()
+    processor.download_model_if_not_exists(lambda x: print(f"    [Model] {x}"))
     
-    # 2. 整理 Markdown 內容
-    summary_md = "本週完成項目：\n"
-    for page in pages:
-        try:
-            title = page["properties"]["Name"]["title"][0]["plain_text"]
-            summary_md += f"- {title}\n"
-        except:
-            continue
+    summary = processor.generate_summary(pages, task_type="Weekly")
     
-    # 3. 寫回 Notion
-    create_summary_page(summary_md)
-    print("週末報告已生成！")
+    print("[*] Summary generated. Pushing to Notion...")
+    title = f"{end_date.strftime('%Y%m%d')}_weekly"
+    notion_url = create_summary_page(title, summary)
+    
+    print(f"[*] Pushed to Notion. URL: {notion_url}")
+    
+    print("[*] Saving to local database...")
+    save_report(
+        task_type="Weekly",
+        start_date=start_date_str,
+        end_date=end_date_str,
+        theme="",
+        summary_content=summary,
+        notion_url=notion_url
+    )
+    print("[*] Workflow complete!")
 
 if __name__ == "__main__":
-    main()
+    run_weekly_report_workflow()

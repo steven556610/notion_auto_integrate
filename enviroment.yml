@@ -1,0 +1,13 @@
+name: notion_integrator
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - llama-cpp-python
+  - streamlit
+  - pandas
+  - requests
+  - python-dotenv
+  - sqlalchemy
