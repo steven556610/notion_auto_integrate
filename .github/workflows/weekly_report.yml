@@ -1,0 +1,13 @@
+name: Weekly Notion Report
+on:
+  schedule:
+    - cron: '0 1 * * 0' # 每週日凌晨 (UTC)
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Script
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python your_script.py
