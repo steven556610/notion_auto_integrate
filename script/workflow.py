@@ -28,15 +28,20 @@ def run_weekly_report_workflow():
         
     print(f"[*] Found {len(pages)} daily pages. Processing with LLM...")
     
-    # 預設選用快速模型
-    processor = LLMProcessor()
-    processor.download_model_if_not_exists(lambda x: print(f"    [Model] {x}"))
+    # 偏好選用 Google API模型（如果有設置 KEY 的話），否則預設使用快速模型
+    from utils.llm_processor import AVAILABLE_MODELS
+    if "Google-Gemini-1.5-Pro (API)" in AVAILABLE_MODELS:
+        processor = LLMProcessor(model_key="Google-Gemini-1.5-Pro (API)")
+        print("    [Model] Using Google Gemini 1.5 Pro API")
+    else:
+        processor = LLMProcessor()
+        processor.download_model_if_not_exists(lambda x: print(f"    [Model] {x}"))
     
     summary = processor.generate_summary(pages, task_type="Weekly")
     
     print("[*] Summary generated. Pushing to Notion...")
     title = f"{end_date.strftime('%Y%m%d')}_weekly"
-    notion_url = create_summary_page(title, summary)
+    notion_url = create_summary_page(title, summary, end_date_str=end_date_str)
     
     print(f"[*] Pushed to Notion. URL: {notion_url}")
     

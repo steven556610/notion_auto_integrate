@@ -11,3 +11,5 @@ dependencies:
   - requests
   - python-dotenv
   - sqlalchemy
+  - pip:
+      - google-generativeai

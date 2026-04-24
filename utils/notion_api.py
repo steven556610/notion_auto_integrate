@@ -114,7 +114,7 @@ def fetch_daily_pages(start_date_str, end_date_str):
     return daily_records
 
 
-def create_summary_page(title, content_text):
+def create_summary_page(title, content_text, end_date_str=None):
     """
     將產生的總結報告寫回 Notion。
     寫入一個單純的 page，包含報告內容。
@@ -144,11 +144,13 @@ def create_summary_page(title, content_text):
     # 限制 blocks 的數量（Notion API 一次最多 100 個 blocks）
     blocks = blocks[:100]
     
+    date_str = end_date_str if end_date_str else datetime.now().strftime('%Y-%m-%d')
+    
     new_page_data = {
         "parent": {"database_id": DATABASE_ID},
         "properties": {
             "Name": {"title": [{"text": {"content": title}}]},
-            "Date": {"date": {"start": datetime.now().strftime('%Y-%m-%d')}}
+            "Date": {"date": {"start": date_str}}
         },
         "children": blocks
     }
