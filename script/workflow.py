@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.notion_api import fetch_daily_pages, create_summary_page
 from utils.llm_processor import LLMProcessor
 from utils.db_manager import save_report, init_db
+from utils.notifier import send_notifications
 from datetime import datetime, timedelta
 
 def run_weekly_report_workflow():
@@ -44,6 +45,10 @@ def run_weekly_report_workflow():
     notion_url = create_summary_page(title, summary, end_date_str=end_date_str)
     
     print(f"[*] Pushed to Notion. URL: {notion_url}")
+    
+    if notion_url:
+        print("[*] Sending notifications...")
+        send_notifications(title, notion_url)
     
     print("[*] Saving to local database...")
     save_report(

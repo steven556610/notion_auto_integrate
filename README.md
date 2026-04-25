@@ -12,6 +12,8 @@
 2. **主題式報告**：除了流水帳流水式總結，你可以問特定問題或指定主題 (例如：這週我學了什麼技術？這週情緒如何？)，LLM 將針對你的日誌回答並產出「Thematic Report」。
 3. **歷史紀錄瀏覽器 (History Vault)**：你整理過的所有紀錄都會被記錄下來，幫助你回顧並快速找到 Notion 的對應連結。
 4. **自動容錯機制**：如果在設定的時間區間內，某些天你忘記寫「日期_daily」的紀錄，系統會智慧地自動跳過它，不會發生報錯。
+5. **高度個人化分析**：系統提示詞針對使用者專業背景設計 (Acer 癌症疫苗開發、生物資訊工程師、資料科學家等)，會自動判斷日誌內容屬性，將報告清楚分拆為【工作內容】與【Side Project】進行深度回顧與展望。
+6. **自動推播通知 (LINE & Email)**：當報告生成完畢並推送到 Notion 後，會自動發送包含 Notion 連結的 LINE Notify 或 Email 通知給您。
 
 ---
 
@@ -34,11 +36,19 @@ pip install streamlit requests python-dotenv sqlalchemy llama-cpp-python hugging
 
 ### 2. 設定環境變數
 
-請複製 `.env.example` 變成 `.env` 並填入你個人的 API Token 與 Database ID：
+請複製 `.env.example` 變成 `.env` 並填寫所有必填的 Token、ID 或是通知相關的參數：
 
 ```ini
 NOTION_API_KEY=ntn_你的_Integration_Token_
 NOTION_DATABASE_ID=你的_Database_ID
+
+# [可選] 通知設定：若填寫，則在報告完成後送出 LINE Notify / Email
+LINE_NOTIFY_TOKEN=你的_line_notify_token
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SENDER_EMAIL=你的_email@gmail.com
+SENDER_PASSWORD=你的_app_password
+RECEIVER_EMAIL=你的_收件email
 ```
 > **怎麼拿到 Database ID？**
 > 你可以在瀏覽器開啟你的 Notion Calendar 資料庫頁面，網址看起來像這樣：`https://www.notion.so/{workspace_name}/{DATABASE_ID}?v={view_id}`，請擷取問號前面的那段亂數。

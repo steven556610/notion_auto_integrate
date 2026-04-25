@@ -6,6 +6,7 @@ import pandas as pd
 from utils.notion_api import fetch_daily_pages, create_summary_page, check_config
 from utils.llm_processor import LLMProcessor, AVAILABLE_MODELS
 from utils.db_manager import init_db, save_report, get_all_reports
+from utils.notifier import send_notifications
 
 # Initialize DB on startup
 init_db()
@@ -83,6 +84,7 @@ with tab1:
                 
                 notion_url = create_summary_page(page_title, summary)
                 if notion_url:
+                    send_notifications(page_title, notion_url)
                     st.success(f"Successfully generated and pushed to Notion! [View Page]({notion_url})")
                     save_report(report_type, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), "", summary, notion_url)
                 else:
@@ -134,6 +136,7 @@ with tab2:
                 
                 notion_url = create_summary_page(page_title, summary)
                 if notion_url:
+                    send_notifications(page_title, notion_url)
                     st.success(f"Successfully generated and pushed to Notion! [View Page]({notion_url})")
                     save_report("Custom", t_start_date.strftime("%Y-%m-%d"), t_end_date.strftime("%Y-%m-%d"), theme_input, summary, notion_url)
                 else:
