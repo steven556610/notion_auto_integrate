@@ -13,3 +13,4 @@ dependencies:
   - sqlalchemy
   - pip:
       - google-generativeai
+      - schedule

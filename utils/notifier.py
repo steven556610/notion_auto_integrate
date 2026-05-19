@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-LINE_NOTIFY_TOKEN = os.getenv("LINE_NOTIFY_TOKEN")
+LINE_ACCESS_TOKEN = os.getenv("LINE_ASSESS_TOKEN")
+USER_ID = os.getenv("USER_ID")
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
@@ -16,20 +17,27 @@ RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 
 
 def send_line_notify(message: str):
-    """Send a notification message via LINE Notify."""
-    if not LINE_NOTIFY_TOKEN:
-        print("[!] LINE_NOTIFY_TOKEN not found. Skipping LINE notification.")
+    """Send a notification message via LINE Messaging API."""
+    if not LINE_ACCESS_TOKEN or not USER_ID:
+        print("[!] LINE_ASSESS_TOKEN or USER_ID not found in .env. Skipping LINE notification.")
         return False
 
-    url = "https://notify-api.line.me/api/notify"
+    url = "https://api.line.me/v2/bot/message/push"
     headers = {
-        "Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
     }
     data = {
-        "message": message
+        "to": USER_ID,
+        "messages": [
+            {
+                "type": "text",
+                "text": message
+            }
+        ]
     }
     try:
-        response = requests.post(url, headers=headers, data=data)
+        response = requests.post(url, headers=headers, json=data)
         if response.status_code == 200:
             print("[*] LINE notification sent successfully.")
             return True
@@ -68,9 +76,10 @@ def send_email_notify(subject: str, message: str):
 
 
 def send_notifications(title: str, notion_url: str):
-    """Wrapper to send both LINE and Email notifications."""
+    """Wrapper to send notifications. Currently uses LINE only."""
     message = f"\n報告已產生: {title}\n查看連結: {notion_url}"
-    subject = f"Notion 報告已產生: {title}"
     
     send_line_notify(message)
+    # Email 通知
+    subject = f"Notion 報告已產生: {title}"
     send_email_notify(subject, message)

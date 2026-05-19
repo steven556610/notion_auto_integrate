@@ -33,13 +33,13 @@ AVAILABLE_MODELS = {
 
 # 動態新增 Google API 選項
 if GOOGLE_API_KEY:
-    AVAILABLE_MODELS["Google-Gemini-1.5-Pro (API)"] = {
+    AVAILABLE_MODELS["Google-Gemini-2.5-Flash (API)"] = {
         "is_api": True,
-        "model_name": "gemini-1.5-pro"
+        "model_name": "gemini-2.5-flash"
     }
-    AVAILABLE_MODELS["Google-Gemini-1.5-Flash (API)"] = {
+    AVAILABLE_MODELS["Google-Gemini-2.0-Flash (API)"] = {
         "is_api": True,
-        "model_name": "gemini-1.5-flash"
+        "model_name": "gemini-2.0-flash"
     }
 
 class LLMProcessor:
@@ -91,10 +91,13 @@ class LLMProcessor:
                     print(f"[Warn] {target_name} is not available in your API tier. Available models: {available_models}")
                     fallback = None
                     for m in available_models:
-                        if "gemini-1.5-flash" in m: fallback = m; break
+                        if "gemini-2.5-flash" in m: fallback = m; break
                     if not fallback:
                         for m in available_models:
-                            if "gemini-1.5-pro" in m: fallback = m; break
+                            if "gemini-2.0-flash" in m: fallback = m; break
+                    if not fallback:
+                        for m in available_models:
+                            if "gemini-1.5-flash" in m: fallback = m; break
                     if not fallback:
                         for m in available_models:
                             if "gemini-pro" in m and "vision" not in m: fallback = m; break
@@ -146,6 +149,16 @@ class LLMProcessor:
                 "- 有哪些可能的發想可以繼續進行。\n"
                 "- 假設要持續往後開發，未來該怎麼優化、應學習哪些新東西，或是推薦可能需要閱讀什麼文獻。\n\n"
                 "請完全以繁體中文 (Traditional Chinese) 和 Markdown 格式輸出。\n\n"
+                f"日誌內容：\n{context_text}"
+            )
+        elif task_type == "Standup":
+            user_prompt = (
+                "請幫我分析昨天的日誌紀錄，並產生一份「敏捷開發戰會報告 (Daily Standup Report)」。\n"
+                "請務必包含以下三個段落：\n"
+                "1. **昨日完成事項 (Yesterday)**：根據日誌總結昨天完成了哪些進度。\n"
+                "2. **今日預計事項 (Today)**：根據昨天的進度與未完成項目進行合理推斷與規劃。\n"
+                "3. **目前阻礙 (Blockers)**：是否有遇到什麼困難或需要協助的地方 (如果沒有請寫無)。\n\n"
+                "請限定使用繁體中文，並以 Markdown 格式輸出。\n\n"
                 f"日誌內容：\n{context_text}"
             )
         elif task_type == "Monthly":

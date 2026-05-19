@@ -157,4 +157,4 @@ with tab3:
         df = pd.DataFrame(history)
         df = df[["id", "task_type", "theme", "start_date", "end_date", "created_at", "notion_url"]]
         # Display as a dataframe
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")

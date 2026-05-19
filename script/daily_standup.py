@@ -10,24 +10,21 @@ from utils.db_manager import save_report, init_db
 from utils.notifier import send_notifications
 from datetime import datetime, timedelta
 
-def run_weekly_report_workflow():
+def run_daily_standup_workflow():
     init_db()
     
-    # 預設抓取過去 5 天
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=5)
+    # 抓取昨天的資料
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday_str = yesterday.strftime("%Y-%m-%d")
     
-    start_date_str = start_date.strftime("%Y-%m-%d")
-    end_date_str = end_date.strftime("%Y-%m-%d")
-    
-    print(f"[*] Fetching Notion pages from {start_date_str} to {end_date_str}...")
-    pages = fetch_daily_pages(start_date_str, end_date_str)
+    print(f"[*] Fetching Notion pages for {yesterday_str}...")
+    pages = fetch_daily_pages(yesterday_str, yesterday_str)
     
     if not pages:
-        print("[!] No pages found in the specified date range. Exiting.")
+        print(f"[!] No pages found for {yesterday_str}. Exiting.")
         return
         
-    print(f"[*] Found {len(pages)} daily pages. Processing with LLM...")
+    print(f"[*] Found {len(pages)} daily pages. Processing with LLM for Standup Report...")
     
     # 偏好選用 Google API模型（如果有設置 KEY 的話），否則預設使用快速模型
     from utils.llm_processor import AVAILABLE_MODELS
@@ -38,11 +35,12 @@ def run_weekly_report_workflow():
         processor = LLMProcessor()
         processor.download_model_if_not_exists(lambda x: print(f"    [Model] {x}"))
     
-    summary = processor.generate_summary(pages, task_type="Weekly")
+    summary = processor.generate_summary(pages, task_type="Standup")
     
     print("[*] Summary generated. Pushing to Notion...")
-    title = f"{end_date.strftime('%Y%m%d')}_weekly"
-    notion_url = create_summary_page(title, summary, end_date_str=end_date_str)
+    today_str = datetime.now().strftime('%Y%m%d')
+    title = f"{today_str}_standup"
+    notion_url = create_summary_page(title, summary, end_date_str=datetime.now().strftime("%Y-%m-%d"))
     
     print(f"[*] Pushed to Notion. URL: {notion_url}")
     
@@ -52,14 +50,14 @@ def run_weekly_report_workflow():
     
     print("[*] Saving to local database...")
     save_report(
-        task_type="Weekly",
-        start_date=start_date_str,
-        end_date=end_date_str,
-        theme="",
+        task_type="Standup",
+        start_date=yesterday_str,
+        end_date=yesterday_str,
+        theme="Agile Daily Standup",
         summary_content=summary,
         notion_url=notion_url
     )
     print("[*] Workflow complete!")
 
 if __name__ == "__main__":
-    run_weekly_report_workflow()
+    run_daily_standup_workflow()

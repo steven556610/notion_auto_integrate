@@ -25,9 +25,9 @@
 
 ```bash
 # 如果使用 Conda
-conda env create -f enviroment.yml
+conda env create -f environment.yml
 # 或者如果上方指令不如預期，您可以強制指定名稱：
-# conda env create -f enviroment.yml -n notion_integrator
+# conda env create -f environment.yml -n notion_integrator
 conda activate notion_integrator
 
 # 或者使用 pip 直接安裝
@@ -65,11 +65,42 @@ App 啟動後，瀏覽器會自動開啟網頁。
 1. 到左側欄確認你的模型設定。預設是 **Qwen2.5-7B-Instruct**。
 2. 第一次執行特定模型時，系統會在背後自動從 HuggingFace 下載 GGUF 到 `models/` 資料夾，下載完成後就會開始推理！依據你的 CPU 性能，推理時間可能會落在 15秒 到 幾分鐘區間。
 
-### 4. 命令列腳本 (可選)
-如果你想把流程串接到系統排程 (Cronjob / Task Scheduler)，我們也提供單獨執行的命令列：
-```bash
-python script/workflow.py
-```
+### 4. 命令列與排程腳本 (可選)
+
+如果您不想使用網頁介面，或是想要將流程整合至系統排程中，本專案提供以下獨立執行的指令：
+
+* **週報自動生成工作流** (手動或排程觸發)：
+  ```bash
+  python script/workflow.py
+  ```
+* **每日 Standup 報告** (手動生成當日報告)：
+  ```bash
+  python script/daily_standup.py
+  ```
+* **常駐式每日排程監聽器** (將每日早上 09:00 自動觸發執行 `daily_standup.py`，保持視窗開啟即可常駐監聽)：
+  ```bash
+  python script/standup_scheduler.py
+  ```
+
+---
+
+### 5. Windows 開機自動啟動 (Streamlit Web UI) 🚀
+
+專案內已為您撰寫好一鍵啟動腳本 [start_streamlit.bat](file:///D:/code/notion_integrator/start_streamlit.bat)，可自動偵測 Conda 環境並啟動 Streamlit 伺服器。
+
+#### 透過「Windows 工作排程器」設定開機自動執行：
+1. 按下鍵盤 `Win + R` 鍵，輸入 `taskschd.msc` 並按下 Enter 打開 **工作排程器**。
+2. 在右側操作面板點擊 **「建立基本工作...」 (Create Basic Task...)**。
+3. **名稱**輸入：`Notion Integrator Web UI`，點擊下一步。
+4. **觸發程序**選擇：**「當我登入時」 (When I log on)** 點擊下一步。(選擇登入時能確保網路與 Conda 環境已載入完成)
+5. **動作**選擇：**「啟動程式」 (Start a program)**。
+6. **程式或指令檔**點擊「瀏覽」，選擇專案目錄下的 `start_streamlit.bat`。
+7. 在「開始位置 (選填)」填入專案的完整路徑：`D:\code\notion_integrator`，點擊下一步。
+8. 勾選最後一頁的 **「當按一下 [完成] 時，開啟此工作的 [內容] 對話方塊」**，然後點擊完成。
+9. 在彈出的屬性視窗中：
+   * 在「一般」標籤頁，確認勾選 **「只有在使用者登入時才執行」**。
+   * 在「條件」標籤頁，**取消勾選**「只有在電腦使用市電時才啟動這個工作」（防止筆電拔掉插頭時不執行）。
+10. 設定完成後，下次電腦開機登入時，系統便會自動啟動 Streamlit App！
 
 ---
 
@@ -79,6 +110,7 @@ python script/workflow.py
 notion_integrator/
 │
 ├── app.py                 # Streamlit UI 主程式
+├── start_streamlit.bat    # Windows 開機一鍵啟動腳本
 ├── environment.yml        # 環境依賴檔案
 ├── .env.example           # 環境變數範例
 │
@@ -88,7 +120,9 @@ notion_integrator/
 │   └── notion_api.py      # 負責 Notion CRUD (跳過無紀錄天數)
 │
 ├── script/
-│   └── workflow.py        # 獨立腳本入口點
+│   ├── workflow.py        # 獨立週報生成腳本
+│   ├── daily_standup.py   # 每日 Standup 報告生成腳本
+│   └── standup_scheduler.py # 每日排程背景背景守護行程 (Daemon)
 │
 ├── data/                  # 供存放 history.db
 └── models/                # 模型下載暫存地 (.gguf)
